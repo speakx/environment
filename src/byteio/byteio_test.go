@@ -8,6 +8,26 @@ import (
 
 var buf []byte
 var cache []byte
+
+var u16 uint16
+var u16Read uint16
+
+func TestUint16ToBytes(t *testing.T) {
+	buf = make([]byte, 10)
+	u16 = 0xABCD
+	t.Logf("uint16:%x %v", u16, u16)
+	t.Logf("buf:%v", buf)
+
+	Uint16ToBytes(u16, buf)
+	t.Logf("Uint16ToBytes buf:%v", buf)
+
+	u16Read = BytesToUint16(buf)
+	t.Logf("u16Read:%x %v", u16Read, u16Read)
+	if u16Read != u16 {
+		t.Errorf("Uint16ToBytes != BytesToUint16 buf:%v", buf)
+	}
+}
+
 var u32 uint32
 var u32Read uint32
 

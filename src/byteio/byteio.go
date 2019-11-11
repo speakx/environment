@@ -54,6 +54,18 @@ func BytesToUint32(buf []byte) uint32 {
 	return uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3])
 }
 
+// Uint16ToBytes 将uint16写入到byte中（本机字节序）
+// 注意：本方法非原子函数，如果写入过程中崩溃会导致数据出错
+func Uint16ToBytes(n uint16, buf []byte) {
+	buf[1] = uint8(n)
+	buf[0] = uint8(n >> 8)
+}
+
+// BytesToUint16 将byte中的2字节数据，转换为uint16（本机字节序）
+func BytesToUint16(buf []byte) uint16 {
+	return uint16(buf[0])<<8 | uint16(buf[1])
+}
+
 // Uint8ToBytes 将uint8写入到byte中（无关字节序、原子操作）
 func Uint8ToBytes(n uint8, buf []byte) {
 	buf[0] = n

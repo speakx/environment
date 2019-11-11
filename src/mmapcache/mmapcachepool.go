@@ -14,10 +14,11 @@ var DefPoolMMapCache *PoolMMapCache
 
 const mmapInitByte byte = 0
 
-// PoolMMapCache 内存池对象
+// PoolMMapCache 通过mmap方式对内存对象持久化缓存
 type PoolMMapCache struct {
 	dir            string
 	template       []byte
+	dataSize       int
 	recycleDur     time.Duration
 	allocator      chan *MMapCache
 	collector      chan *MMapCache
@@ -28,15 +29,17 @@ type PoolMMapCache struct {
 	releaseCounter uint64
 }
 
-// InitMMapCachePool 用作需要通过文件持久化的时候，通过mmap方式进行更高效的文件i/o
-// 通过内存mmap方式，把内存中的Chunk持久化到文件
-// size: mmap方式一次分配的内存大小
-// cnt:  每一次，预备多少块size大小的内存池
-func InitMMapCachePool(dir string, size int, cnt int, errorfunc func(error), reloadfunc func([]*MMapCache)) error {
+// InitMMapCachePool 初始化mmap的cache池
+func InitMMapCachePool(
+	dir string,
+	cachesize int, datasize int, prealloccount int,
+	errorfunc func(error),
+	reloadfunc func([]*MMapCache)) error {
 	os.MkdirAll(dir, os.ModePerm)
 	DefPoolMMapCache = &PoolMMapCache{
 		dir:        dir,
-		template:   createMMapTemplate(size),
+		template:   createMMapTemplate(cachesize),
+		dataSize:   datasize,
 		recycleDur: time.Second,
 		allocator:  make(chan *MMapCache),
 		collector:  make(chan *MMapCache),
@@ -46,7 +49,7 @@ func InitMMapCachePool(dir string, size int, cnt int, errorfunc func(error), rel
 
 	reload := DefPoolMMapCache.reloadCache()
 	reloadfunc(reload)
-	DefPoolMMapCache.mmapAllocLoop(cnt)
+	DefPoolMMapCache.mmapAllocLoop(prealloccount)
 	for {
 		if DefPoolMMapCache.loadFlag == false {
 			<-time.After(time.Millisecond * 50)
@@ -55,6 +58,16 @@ func InitMMapCachePool(dir string, size int, cnt int, errorfunc func(error), rel
 		}
 	}
 	return nil
+}
+
+// Alloc 分配一个mmapcache
+func (m *PoolMMapCache) Alloc() *MMapCache {
+	return <-m.allocator
+}
+
+// Collect 回收一个mmapcache到缓存池
+func (m *PoolMMapCache) Collect(mmcache *MMapCache) {
+	m.collector <- mmcache
 }
 
 func createMMapTemplate(size int) []byte {
@@ -69,6 +82,10 @@ func createMMapFile(file string, template []byte) error {
 	return ioutil.WriteFile(file, template, 0666)
 }
 
+func makeMMapCacheID(seqid uint64) uint64 {
+	return uint64(time.Now().Unix())<<32 | seqid
+}
+
 func (m *PoolMMapCache) reloadCache() []*MMapCache {
 	for index := 0; ; index++ {
 		filePath := path.Join(m.dir, fmt.Sprintf("%v.dat", index))
@@ -79,16 +96,6 @@ func (m *PoolMMapCache) reloadCache() []*MMapCache {
 		os.Remove(filePath)
 	}
 	return nil
-}
-
-// Alloc 分配一个mmapcache
-func (m *PoolMMapCache) Alloc() *MMapCache {
-	return <-m.allocator
-}
-
-// Collect 回收一个mmapcache到缓存池
-func (m *PoolMMapCache) Collect(mmcache *MMapCache) {
-	m.collector <- mmcache
 }
 
 func (m *PoolMMapCache) preAllocMMapCache(fileid uint64) *MMapCache {
@@ -113,7 +120,7 @@ func (m *PoolMMapCache) preAllocMMapCache(fileid uint64) *MMapCache {
 		}
 	}
 
-	mmapCache, err := newMMapCache(filePath)
+	mmapCache, err := newMMapCache(filePath, m.dataSize)
 	if nil != err {
 		m.errorfuc(err)
 		os.Exit(0)
@@ -138,10 +145,8 @@ func (m *PoolMMapCache) mmapAllocLoop(cnt int) {
 			}
 			e := q.Back()
 
-			id := uint64(time.Now().Unix()) << 32
-			id |= mmapIDSeq
+			e.Value.(*MMapCache).name(makeMMapCacheID(mmapIDSeq))
 			mmapIDSeq++
-			e.Value.(*MMapCache).name(id)
 
 			select {
 			case b := <-m.collector:

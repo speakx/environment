@@ -21,35 +21,36 @@ echo
 
 # 重新造一遍 go mod
 sh ./shell/gen-proto.sh
-# sh ./shell/configure.sh
-sh ./publish.sh # 把代码发布到pkg目录，如果test的文件对其他目录有依赖则通过gopath引入
-curdir=$(pwd)
-pkgenv=${curdir%/*}"/pkg"
-export GOPATH=$GOPATH:${pkgenv}
-echo $GOPATH
+sh ./shell/configure.sh
 
 # byteio test
 if [ "$target" == "all" ] || [ "$target" == "byteio" ] ;then
-    go test -v -bench=".*" ./src/byteio/byteio_test.go ./src/byteio/byteio.go
-    go test -bench=".*" ./src/byteio/byteio_test.go ./src/byteio/byteio.go
+    cd ./src
+    go test -v -bench=".*" ./byteio/byteio_test.go ./byteio/byteio.go
+    go test -bench=".*" ./byteio/byteio_test.go ./byteio/byteio.go
+    go test -v -bench=".*" ./byteio/mem_test.go ./byteio/mem.go
+    go test -bench=".*" ./byteio/mem_test.go ./byteio/mem.go
 fi
 
 # log test
 if [ "$target" == "all" ] || [ "$target" == "log" ] ;then
-    go test -v -bench=".*" ./src/logger/log_test.go ./src/logger/log.go
-    rm -f ./src/logger/test.log*
+    cd ./src
+    go test -v -bench=".*" ./logger/log_test.go ./logger/log.go
+    rm -f ./logger/test.log*
 fi
 
 # mmap cache
 if [ "$target" == "all" ] || [ "$target" == "mmap" ] ;then
     # go get github.com/edsrzf/mmap-go
-    go test -v ./src/mmapcache/mmapcache_test.go ./src/mmapcache/mmapcachepool.go ./src/mmapcache/mmapcache.go
-    go test -bench=".*" ./src/mmapcache/mmapcache_test.go ./src/mmapcache/mmapcachepool.go ./src/mmapcache/mmapcache.go
+    cd ./src
+    go test -v ./mmapcache/mmapcache_test.go ./mmapcache/mmapcachepool.go ./mmapcache/mmapcache.go ./mmapcache/mmapdata.go
+    go test -bench=".*" ./mmapcache/mmapcache_test.go ./mmapcache/mmapcachepool.go ./mmapcache/mmapcache.go ./mmapcache/mmapdata.go
 fi
 
 # rocksdb test
 if [ "$target" == "all" ] || [ "$target" == "rocksdb" ] ;then
     go get github.com/tecbot/gorocksdb
-    go test -v ./src/rocksdbimp/rocksdbimp_test.go ./src/rocksdbimp/rocksdbimp.go
-    go test -bench=".*" ./src/rocksdbimp/rocksdbimp_test.go ./src/rocksdbimp/rocksdbimp.go
+    cd ./src
+    go test -v ./rocksdbimp/rocksdbimp_test.go ./rocksdbimp/rocksdbimp.go
+    go test -bench=".*" ./rocksdbimp/rocksdbimp_test.go ./rocksdbimp/rocksdbimp.go
 fi

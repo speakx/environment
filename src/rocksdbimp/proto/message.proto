@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package proto;
+
+message Message {
+  bytes key = 1;
+  bytes val = 2;
+}
+
+message MessageChunk {
+  repeated Message msgs = 1;
+}

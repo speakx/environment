@@ -3,7 +3,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # 测试选项
 if [ ! -n "$1" ] ;then
-    echo "you need input test target { all | log | rocksdb }."
+    echo "you need input test target { all | log | transid | rocksdb }."
     exit
 else
     echo "the test target is $1"
@@ -30,10 +30,16 @@ if [ "$target" == "all" ] || [ "$target" == "log" ] ;then
     rm -f ./logger/test.log*
 fi
 
+# transid test
+if [ "$target" == "all" ] || [ "$target" == "transid" ] ;then
+    cd ./src
+    go test -v -bench=".*" ./transid/transid_test.go
+fi
+
 # rocksdb test
 if [ "$target" == "all" ] || [ "$target" == "rocksdb" ] ;then
     go get github.com/tecbot/gorocksdb
     cd ./src
     go test -v ./rocksdbimp/rocksdbimp_test.go ./rocksdbimp/rocksdbimp.go
-    go test -bench=".*" ./rocksdbimp/rocksdbimp_test.go ./rocksdbimp/rocksdbimp.go
+    go test -v -bench=".*" ./rocksdbimp/rocksdbimp_test.go ./rocksdbimp/rocksdbimp.go
 fi

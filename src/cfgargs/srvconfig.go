@@ -30,6 +30,10 @@ type SrvConfig struct {
 		DataSize int    `yaml:"datasize"` // default: 1024*8
 		PreAlloc int    `yaml:"prealloc"` // default: 100
 	}
+	Dump struct {
+		Interval int    `yaml:"interval"` // default: 5
+		Addr     string `yaml:"addr"`     // default:
+	}
 	RemoteCfg map[string]string
 }
 
@@ -75,6 +79,10 @@ func (s *SrvConfig) syncLocal() error {
 	}
 	if 0 == s.Cache.PreAlloc {
 		s.Cache.PreAlloc = 100
+	}
+
+	if 0 == s.Dump.Interval {
+		s.Dump.Interval = 5
 	}
 	return nil
 }

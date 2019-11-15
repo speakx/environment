@@ -2,9 +2,11 @@ module environment
 
 go 1.13
 
-replace mmapcache => /Users/Kim/Documents/GitHub/speakx/mmapcache/src
+replace mmapcache => ../../mmapcache/src
 
-replace svrdemo => /Users/Kim/Documents/GitHub/speakx/svrdemo/src
+replace single => ../../single/src
+
+replace svrdemo => ../../svrdemo/src
 
 require (
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect

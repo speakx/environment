@@ -3,7 +3,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # 测试选项
 if [ ! -n "$1" ] ;then
-    echo "you need input test target { all | log | transid | rocksdb }."
+    echo "you need input test target { all | log | srvinstance | transid | rocksdb }."
     exit
 else
     echo "the test target is $1"
@@ -28,6 +28,12 @@ if [ "$target" == "all" ] || [ "$target" == "log" ] ;then
     cd ./src
     go test -v -bench=".*" ./logger/log_test.go ./logger/log.go
     rm -f ./logger/test.log*
+fi
+
+# srvinstance test
+if [ "$target" == "all" ] || [ "$target" == "srvinstance" ] ;then
+    cd ./src
+    go test -v ./srvinstance/tool_test.go ./srvinstance/tool.go
 fi
 
 # transid test

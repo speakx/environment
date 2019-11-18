@@ -14,9 +14,12 @@ import (
 
 // SrvConfig 通过默认配置+cfgaddr同步后得到的配置信息
 type SrvConfig struct {
-	Addr string `yaml:"addr"`
-	Name string `yaml:"name"`
-	Log  struct {
+	Info struct {
+		Addr string `yaml:"addr"`
+		Name string `yaml:"name"`
+		ID   int    `yaml:"id"`
+	}
+	Log struct {
 		Path    string `yaml:"path"`    // default: ./log/(appname).log
 		Console bool   `yaml:"console"` // default: false
 		Level   string `yaml:"level"`   // default: info
@@ -24,9 +27,12 @@ type SrvConfig struct {
 	CfgCenter struct {
 		Addr string `yaml:"addr"`
 	}
+	DB struct {
+		Path string `yaml:"path"` // default: ./db
+	}
 	Cache struct {
 		Path     string `yaml:"path"`     // default: ./cache
-		MMapSize int    `yaml:"mmapsize"` // default: 1024*1024*1
+		MMapSize int    `yaml:"mmapsize"` // default: 1024*512
 		DataSize int    `yaml:"datasize"` // default: 1024*8
 		PreAlloc int    `yaml:"prealloc"` // default: 100
 	}
@@ -68,11 +74,15 @@ func (s *SrvConfig) syncLocal() error {
 		s.Log.Path = filepath.Join(appPath, fmt.Sprintf("/log/%v.log", path.Base(os.Args[0])))
 	}
 
+	if "" == s.DB.Path {
+		s.DB.Path = filepath.Join(appPath, fmt.Sprintf("/db"))
+	}
+
 	if "" == s.Cache.Path {
 		s.Cache.Path = filepath.Join(appPath, fmt.Sprintf("/cache"))
 	}
 	if 0 == s.Cache.MMapSize {
-		s.Cache.MMapSize = 1024 * 1024 * 1
+		s.Cache.MMapSize = 1024 * 512
 	}
 	if 0 == s.Cache.DataSize {
 		s.Cache.DataSize = 1024 * 8

@@ -74,7 +74,9 @@ func (d *dumpContext) loopRuntimeInfo(interval int64) {
 				if d.dumpFlg {
 					d.packetRecvHandleRate = d.packetRecvHandle / interval
 					d.packetSendHandleRate = d.packetSendHandle / interval
-					d.dumpFunc(d.packetRecv, d.packetSend, d.packetRecvHandleRate, d.packetSendHandleRate)
+					if nil != d.dumpFunc {
+						d.dumpFunc(d.packetRecv, d.packetSend, d.packetRecvHandleRate, d.packetSendHandleRate)
+					}
 				}
 				d.packetRecvHandle = 0
 				d.packetSendHandle = 0
